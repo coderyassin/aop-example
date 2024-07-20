@@ -10,6 +10,7 @@ import org.yascode.aop_example.controller.api.StudentApi;
 import org.yascode.aop_example.controller.request.RetrieveStudentRequest;
 import org.yascode.aop_example.controller.response.StudentResponse;
 import org.yascode.aop_example.entity.Student;
+import org.yascode.aop_example.exception.ResourceNotFoundException;
 import org.yascode.aop_example.service.StudentService;
 
 import java.time.LocalDateTime;
@@ -25,22 +26,24 @@ public class StudentController implements StudentApi {
     }
 
     @Override
-    public ResponseEntity<?> retrieveStudent(String name) {
+    public ResponseEntity<?> retrieveStudent(String name,
+                                             HttpServletRequest httpServletRequest) throws ResourceNotFoundException {
         return ResponseEntity.ok(studentService.getStudentByName(name));
     }
 
     @Override
     public ResponseEntity<?> retrieveStudent(RetrieveStudentRequest retrieveStudentRequest,
-                                             HttpServletRequest httpServletRequest) {
-        try {
-            Student student = studentService.getStudentByName(retrieveStudentRequest.student(), LocalDateTime.now());
-            return ResponseEntity.status(HttpStatus.OK)
-                    .body(StudentResponse.builder()
-                            .student(student)
-                            .build());
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body(e.getMessage());
-        }
+                                             HttpServletRequest httpServletRequest) throws ResourceNotFoundException {
+        return ResponseEntity.status(HttpStatus.OK)
+                .body(StudentResponse.builder()
+                        .student(studentService.getStudentByName(retrieveStudentRequest.student(),
+                                LocalDateTime.now())).build()
+                );
+    }
+
+    @Override
+    public ResponseEntity<?> retrieveAge(String name, HttpServletRequest httpServletRequest) throws ResourceNotFoundException {
+        return ResponseEntity.status(HttpStatus.OK)
+                .body(studentService.getAge(name));
     }
 }

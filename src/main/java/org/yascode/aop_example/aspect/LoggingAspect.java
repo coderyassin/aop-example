@@ -4,6 +4,8 @@ import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
 import org.aspectj.lang.JoinPoint;
 import org.aspectj.lang.annotation.*;
+import org.springframework.http.HttpStatusCode;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 import org.yascode.aop_example.util.LoggingUtil;
 
@@ -44,6 +46,28 @@ public class LoggingAspect {
         }
     }
 
+    @AfterReturning(pointcut = "controllerMethods()", returning = "result")
+    public void afterReturningControllerMethod(JoinPoint joinPoint, Object result){
+        if(result instanceof ResponseEntity) {
+            ResponseEntity responseEntity = (ResponseEntity) result;
+            HttpStatusCode statusCode = responseEntity.getStatusCode();
+            Object body = responseEntity.getBody();
+            Map<String, Object> responseMap = new HashMap<>();
+            responseMap.put("statusCode", statusCode.value());
+            responseMap.put("body", body);
+            LoggingUtil.logReturningMethod(getMethodFullName(joinPoint), responseMap);
+        } else {
+            LoggingUtil.logReturningMethod(getMethodFullName(joinPoint),
+                    Objects.nonNull(result) ? result.toString() : null);
+        }
+    }
+
+    @AfterThrowing(pointcut = "controllerMethods()", throwing = "error")
+    public void afterThrowingControllerMethod(JoinPoint joinPoint, Throwable error) {
+        LoggingUtil.logThrowingMethod(getMethodFullName(joinPoint),
+                Objects.nonNull(error) ? error.getMessage() : null);
+    }
+
     @Pointcut("execution(* org.yascode.aop_example.service.*.*(..))")
     private void serviceMethods(){}
 
@@ -64,10 +88,16 @@ public class LoggingAspect {
         }
     }
 
+    @AfterReturning(pointcut = "serviceMethods()", returning = "result")
+    public void afterReturningServiceMethod(JoinPoint joinPoint, Object result){
+        LoggingUtil.logReturningMethod(getMethodFullName(joinPoint),
+                Objects.nonNull(result) ? result.toString() : null);
+    }
+
     @AfterThrowing(pointcut = "serviceMethods()", throwing = "error")
     public void afterThrowingServiceMethod(JoinPoint joinPoint, Throwable error) {
-        log.error("Exception in {}() with cause = {}", getMethodFullName(joinPoint),
-                Objects.nonNull(error.getMessage()) ? error.getMessage() : "NULL");
+        LoggingUtil.logThrowingMethod(getMethodFullName(joinPoint),
+                Objects.nonNull(error) ? error.getMessage() : null);
     }
 
     private String getMethodFullName(JoinPoint joinPoint) {
@@ -76,5 +106,12 @@ public class LoggingAspect {
                 .append(".")
                 .append(joinPoint.getSignature().getName())
                 .toString();
+    }
+
+    public static boolean isPrimitiveOrWrapper(Object object) {
+        if(Objects.isNull(object)) {
+            return false;
+        }
+        return object.getClass().isPrimitive();
     }
 }
