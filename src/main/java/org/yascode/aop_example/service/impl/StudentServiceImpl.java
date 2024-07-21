@@ -4,40 +4,56 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.yascode.aop_example.entity.Student;
 import org.yascode.aop_example.exception.ResourceNotFoundException;
+import org.yascode.aop_example.model.StudentModel;
+import org.yascode.aop_example.repository.StudentRepository;
+import org.yascode.aop_example.repository.specification.StudentSpec;
 import org.yascode.aop_example.service.StudentService;
 
-import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Optional;
 
 @Service
 @Slf4j
 public class StudentServiceImpl implements StudentService {
-    @Override
-    public Student getStudentByName(String name) throws ResourceNotFoundException {
-        if(name.equals("Yassin")) {
-            return Student.builder()
-                    .name("Yassin")
-                    .age(27)
-                    .build();
-        }
-        throw new ResourceNotFoundException(String.format("Student with name %s not found", name));
+    public final StudentRepository studentRepository;
+
+    public StudentServiceImpl(StudentRepository studentRepository) {
+        this.studentRepository = studentRepository;
     }
 
     @Override
-    public Student getStudentByName(Student student, LocalDateTime localDateTime) throws ResourceNotFoundException {
-        if(student.getName().equals("Yassin") && student.getAge() == 27 ) {
-            return Student.builder()
-                    .name("Yassin")
-                    .age(27)
-                    .build();
+    public Student getStudentById(int id) {
+        Optional<Student> studentOptional = studentRepository.findStudentById(id);
+        if (studentOptional.isPresent()) {
+            return studentOptional.get();
         }
-        throw new ResourceNotFoundException(String.format("Student %s not found", student));
+        throw new ResourceNotFoundException("Student with id " + id + " not found");
     }
 
     @Override
-    public Integer getAge(String name) throws ResourceNotFoundException {
-        if(name.equals("Yassin")) {
-            return 27;
+    public List<Student> getStudentByName(String name) throws ResourceNotFoundException {
+        List<Student> students = studentRepository.findStudentByName(name);
+        if (students.isEmpty()) {
+            throw new ResourceNotFoundException(String.format("Student with name %s not found", name));
         }
-        throw new ResourceNotFoundException(String.format("Student with name %s not found", name));
+        return students;
+    }
+
+    @Override
+    public List<Student> getStudentByName(StudentModel student) throws ResourceNotFoundException {
+        List<Student> students = studentRepository.findAll(StudentSpec.studentQuery(Optional.ofNullable(student)));
+        if (students.isEmpty()) {
+            throw new ResourceNotFoundException(String.format("Student with criteria %s not found", student));
+        }
+        return students;
+    }
+
+    @Override
+    public Student retrieveStudentCode(Long studentCode) {
+        Optional<Student> studentOptional = studentRepository.findStudentByStudentCode(studentCode);
+        if (studentOptional.isEmpty()) {
+            throw new ResourceNotFoundException("Student with code " + studentCode + " not found");
+        }
+        return studentOptional.get();
     }
 }

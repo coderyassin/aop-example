@@ -72,14 +72,14 @@ public class LoggingAspect {
     private void serviceMethods(){}
 
     @Before("serviceMethods()")
-    public void beforeAdvice(JoinPoint joinPoint){
+    public void beforeServiceMethod(JoinPoint joinPoint){
         String methodFullName = getMethodFullName(joinPoint);
         startTimeMap.put(methodFullName, System.currentTimeMillis());
         LoggingUtil.logMethodStart(methodFullName, joinPoint.getArgs());
     }
 
     @After("serviceMethods()")
-    public void afterAdvice(JoinPoint joinPoint){
+    public void afterServiceMethod(JoinPoint joinPoint){
         String methodFullName = getMethodFullName(joinPoint);
         Long startTime = startTimeMap.remove(methodFullName);
         if(Objects.nonNull(startTime)) {
@@ -100,6 +100,32 @@ public class LoggingAspect {
                 Objects.nonNull(error) ? error.getMessage() : null);
     }
 
+    @Pointcut("execution(* org.yascode.aop_example.repository.*.*(..))")
+    private void repositoryMethods(){}
+
+    @Before("repositoryMethods()")
+    public void beforeRepositoryMethod(JoinPoint joinPoint){
+        String methodFullName = getMethodFullName(joinPoint);
+        startTimeMap.put(methodFullName, System.currentTimeMillis());
+        LoggingUtil.logMethodStart(methodFullName, joinPoint.getArgs());
+    }
+
+    @After("repositoryMethods()")
+    public void afterRepositoryMethod(JoinPoint joinPoint){
+        String methodFullName = getMethodFullName(joinPoint);
+        Long startTime = startTimeMap.remove(methodFullName);
+        if(Objects.nonNull(startTime)) {
+            long duration = System.currentTimeMillis() - startTime;
+            LoggingUtil.logMethodEnd(methodFullName, duration);
+        }
+    }
+
+    @AfterThrowing(pointcut = "repositoryMethods()", throwing = "error")
+    public void afterThrowingRepositoryMethod(JoinPoint joinPoint, Throwable error) {
+        LoggingUtil.logThrowingMethod(getMethodFullName(joinPoint),
+                Objects.nonNull(error) ? error.getMessage() : null);
+    }
+
     private String getMethodFullName(JoinPoint joinPoint) {
         return new StringBuilder()
                 .append(joinPoint.getSignature().getDeclaringTypeName())
@@ -108,10 +134,4 @@ public class LoggingAspect {
                 .toString();
     }
 
-    public static boolean isPrimitiveOrWrapper(Object object) {
-        if(Objects.isNull(object)) {
-            return false;
-        }
-        return object.getClass().isPrimitive();
-    }
 }

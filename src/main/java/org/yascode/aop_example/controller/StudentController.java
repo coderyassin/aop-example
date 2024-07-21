@@ -4,16 +4,13 @@ import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.yascode.aop_example.controller.api.StudentApi;
 import org.yascode.aop_example.controller.request.RetrieveStudentRequest;
-import org.yascode.aop_example.controller.response.StudentResponse;
-import org.yascode.aop_example.entity.Student;
 import org.yascode.aop_example.exception.ResourceNotFoundException;
 import org.yascode.aop_example.service.StudentService;
-
-import java.time.LocalDateTime;
 
 @Slf4j
 @RestController
@@ -35,15 +32,17 @@ public class StudentController implements StudentApi {
     public ResponseEntity<?> retrieveStudent(RetrieveStudentRequest retrieveStudentRequest,
                                              HttpServletRequest httpServletRequest) throws ResourceNotFoundException {
         return ResponseEntity.status(HttpStatus.OK)
-                .body(StudentResponse.builder()
-                        .student(studentService.getStudentByName(retrieveStudentRequest.student(),
-                                LocalDateTime.now())).build()
-                );
+                .body(studentService.getStudentByName(retrieveStudentRequest.student()));
     }
 
     @Override
-    public ResponseEntity<?> retrieveAge(String name, HttpServletRequest httpServletRequest) throws ResourceNotFoundException {
+    public ResponseEntity<?> retrieveStudentCode(Long studentCode, HttpServletRequest httpServletRequest) throws ResourceNotFoundException {
         return ResponseEntity.status(HttpStatus.OK)
-                .body(studentService.getAge(name));
+                .body(studentService.retrieveStudentCode(studentCode));
+    }
+
+    @Override
+    public ResponseEntity<?> getStudent(@PathVariable int id, HttpServletRequest httpServletRequest) throws ResourceNotFoundException {
+        return ResponseEntity.ok(studentService.getStudentById(id));
     }
 }

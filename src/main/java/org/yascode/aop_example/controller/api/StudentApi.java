@@ -18,7 +18,10 @@ public interface StudentApi {
     ResponseEntity<?> retrieveStudent(@RequestBody RetrieveStudentRequest retrieveStudentRequest,
                                       HttpServletRequest httpServletRequest) throws ResourceNotFoundException;
 
-    @GetMapping(value = "/retrieveAge/{name}")
-    ResponseEntity<?> retrieveAge(@PathVariable("name") String name,
+    @GetMapping(value = "/retrieveStudentCode/{studentCode}")
+    ResponseEntity<?> retrieveStudentCode(@PathVariable("studentCode") Long studentCode,
                                   HttpServletRequest httpServletRequest) throws ResourceNotFoundException;
+
+    @GetMapping(value = "byId/{id}")
+    ResponseEntity<?> getStudent(@PathVariable("id") int id, HttpServletRequest httpServletRequest) throws ResourceNotFoundException;
 }
